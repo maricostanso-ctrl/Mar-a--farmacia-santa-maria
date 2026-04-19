@@ -47,6 +47,14 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
   const [history, setHistory] = useState([]);
+const speak = (text) => {
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = "es-AR";
+    utterance.rate = 0.95;
+    utterance.pitch = 1.1;
+    window.speechSynthesis.speak(utterance);
+  };
   const [mariaMessage, setMariaMessage] = useState("¡Hola! Soy María 👩‍⚕️ Tu asistente de marketing. ¿Qué contenido creamos hoy?");
 
   const generate = async (promptText) => {
