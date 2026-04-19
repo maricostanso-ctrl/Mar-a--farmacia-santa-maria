@@ -123,7 +123,7 @@ export default function App() {
         }}>
           <div style={{ position: "relative", flexShrink: 0 }}>
             <img
-              src="./IMG_5692.png"
+              src="/IMG_5692.png"
               alt="María"
               style={{
                 width: 90,
