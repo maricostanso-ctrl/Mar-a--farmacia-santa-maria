@@ -55,7 +55,9 @@ const speak = (text) => {
     utterance.pitch = 1.1;
     window.speechSynthesis.speak(utterance);
   };
-  const [mariaMessage, setMariaMessage] = useState("¡Hola! Soy María 👩‍⚕️ Tu asistente de marketing. ¿Qué contenido creamos hoy?");
+  const setMariaMessage("¡Hola! Soy María 👩‍⚕️ Tu asistente de marketing. ¿Qué contenido creamos hoy?");
+setTimeout(() => speak("¡Hola! Soy María, tu asistente de marketing de Farmacia Santa María. ¿Qué contenido creamos hoy?"), 500);
+
 
   const generate = async (promptText) => {
     if (!selectedType || !promptText.trim()) return;
