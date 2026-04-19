@@ -80,7 +80,9 @@ speak("Estoy creando el contenido perfecto para vos...");
       const data = await res.json();
       const text = data.content?.map((b) => b.text || "").join("") || "Error al generar contenido.";
       setResult(text);
-      setMariaMessage("¡Listo! Acá tenés el contenido. Podés copiarlo y pegarlo directamente 💚");
+      setMariaMessage("¡Listo! Acá tenés el contenido 💚");
+speak("¡Listo! Acá tenés el contenido. Podés copiarlo y pegarlo en tus redes.");
+
       setHistory((prev) => [{ type: typeLabel, prompt: promptText, result: text }, ...prev.slice(0, 4)]);
     } catch {
       setResult("❌ Error de conexión. Intentá de nuevo.");
