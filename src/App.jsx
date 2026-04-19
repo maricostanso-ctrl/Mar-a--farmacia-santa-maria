@@ -61,7 +61,9 @@ const speak = (text) => {
     if (!selectedType || !promptText.trim()) return;
     setLoading(true);
     setResult("");
-    setMariaMessage("Estoy creando el contenido perfecto para vos... ✨");
+     setMariaMessage("Estoy creando el contenido perfecto para vos... ✨");
+speak("Estoy creando el contenido perfecto para vos...");
+
     const typeLabel = CONTENT_TYPES.find((t) => t.id === selectedType)?.label;
     const fullPrompt = `Generá un ${typeLabel} para: ${promptText}`;
     try {
