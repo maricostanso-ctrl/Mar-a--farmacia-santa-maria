@@ -1,0 +1,362 @@
+import { useState } from "react";
+
+const SYSTEM_PROMPT = `Sos el asistente de marketing digital de **Farmacia Santa María**, ubicada en Juana Koslay, provincia de San Luis, Argentina.
+
+Tu rol es ayudar a crear contenido de marketing auténtico, cercano y profesional para las redes sociales y canales de comunicación de la farmacia.
+
+**Sobre la farmacia:**
+- Nombre: Farmacia Santa María
+- Ubicación: Juana Koslay, San Luis, Argentina
+- Tono de comunicación: cálido, cercano, confiable, profesional pero accesible
+- Público: vecinos de Juana Koslay y alrededores
+
+**Lo que podés generar:**
+1. **Posts para Instagram** – con caption, emojis y hashtags relevantes (#JuanaKoslay #SanLuis #FarmaciaSantaMaría etc.)
+2. **Posts para Facebook** – más extensos, informativos, con llamada a la acción
+3. **Mensajes para WhatsApp** – cortos, directos, para grupos o estados
+4. **Campañas especiales** – Día de la Madre, Día del Niño, invierno, verano, Navidad, etc.
+5. **Respuestas a clientes** – profesionales y empáticas
+6. **Ideas de contenido semanal** – planificación de qué publicar cada día
+
+**Reglas importantes:**
+- Siempre escribí en español rioplatense (vos, sos, etc.)
+- Nunca hagas recomendaciones médicas específicas ni indicaciones de medicamentos con dosis
+- Mencioná siempre que ante cualquier duda consulten al farmacéutico
+- El contenido debe sentirse local y genuino, no corporativo
+- Usá emojis con moderación pero de forma efectiva
+- Para Instagram siempre incluí entre 5 y 10 hashtags al final
+
+Respondé siempre de forma clara, lista para copiar y pegar en la red social indicada.`;
+
+const CONTENT_TYPES = [
+  { id: "instagram", label: "Post Instagram", icon: "📸", color: "#E1306C" },
+  { id: "facebook", label: "Post Facebook", icon: "👍", color: "#1877F2" },
+  { id: "whatsapp", label: "WhatsApp", icon: "💬", color: "#25D366" },
+  { id: "campana", label: "Campaña Especial", icon: "🎯", color: "#FF6B35" },
+  { id: "respuesta", label: "Respuesta a Cliente", icon: "🤝", color: "#8B5CF6" },
+  { id: "ideas", label: "Ideas Semanales", icon: "💡", color: "#F59E0B" },
+];
+
+const QUICK_PROMPTS = {
+  instagram: [
+    "Promoción de vitaminas para el invierno",
+    "Recordatorio de turno para vacunas",
+    "Tip de salud para esta semana",
+    "Presentación de un nuevo producto",
+  ],
+  facebook: [
+    "Información sobre servicios de la farmacia",
+    "Campaña de prevención de gripe",
+    "Novedades y horarios de atención",
+    "Concientización sobre salud bucal",
+  ],
+  whatsapp: [
+    "Oferta especial del día",
+    "Recordatorio de medicación",
+    "Aviso de cierre por feriado",
+    "Bienvenida al grupo de clientes",
+  ],
+  campana: [
+    "Día de la Madre",
+    "Día del Niño",
+    "Campaña de invierno",
+    "Navidad y Año Nuevo",
+    "Vuelta al cole",
+    "Semana de la Lactancia",
+  ],
+  respuesta: [
+    "Cliente consulta por demora en pedido",
+    "Cliente agradece la atención",
+    "Cliente pregunta por horarios",
+    "Cliente pide info sobre un medicamento",
+  ],
+  ideas: [
+    "Plan de contenido para esta semana",
+    "Ideas para el mes de julio",
+    "Contenido para la época de gripe",
+    "Posts educativos sobre salud",
+  ],
+};
+
+export default function FarmaciaSantaMaria() {
+  const [selectedType, setSelectedType] = useState(null);
+  const [customPrompt, setCustomPrompt] = useState("");
+  const [result, setResult] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [history, setHistory] = useState([]);
+
+  const generate = async (promptText) => {
+    if (!selectedType || !promptText.trim()) return;
+    setLoading(true);
+    setResult("");
+    const typeLabel = CONTENT_TYPES.find((t) => t.id === selectedType)?.label;
+    const fullPrompt = `Generá un ${typeLabel} para: ${promptText}`;
+    try {
+      const res = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-20250514",
+          max_tokens: 1000,
+          system: SYSTEM_PROMPT,
+          messages: [{ role: "user", content: fullPrompt }],
+        }),
+      });
+      const data = await res.json();
+      const text = data.content?.map((b) => b.text || "").join("") || "Error al generar contenido.";
+      setResult(text);
+      setHistory((prev) => [{ type: typeLabel, prompt: promptText, result: text }, ...prev.slice(0, 4)]);
+    } catch {
+      setResult("❌ Error de conexión. Intentá de nuevo.");
+    }
+    setLoading(false);
+  };
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(result);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const selectedTypeData = CONTENT_TYPES.find((t) => t.id === selectedType);
+
+  return (
+    <div style={{
+      minHeight: "100vh",
+      background: "linear-gradient(135deg, #0f1923 0%, #1a2a3a 50%, #0f1923 100%)",
+      fontFamily: "'Georgia', serif",
+      color: "#e8e0d4",
+      padding: "0",
+    }}>
+      {/* Header */}
+      <div style={{
+        background: "linear-gradient(90deg, #1a3a2a 0%, #0d2818 100%)",
+        borderBottom: "2px solid #2d6a4f",
+        padding: "20px 24px",
+        display: "flex",
+        alignItems: "center",
+        gap: "16px",
+      }}>
+        <div style={{
+          width: 48, height: 48,
+          background: "linear-gradient(135deg, #2d6a4f, #52b788)",
+          borderRadius: "12px",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          fontSize: 24,
+          boxShadow: "0 4px 12px rgba(82,183,136,0.3)",
+        }}>💊</div>
+        <div>
+          <div style={{ fontSize: 20, fontWeight: "bold", color: "#52b788", letterSpacing: "0.5px" }}>
+            Farmacia Santa María
+          </div>
+          <div style={{ fontSize: 12, color: "#8ab4a0", letterSpacing: "1px", textTransform: "uppercase" }}>
+            Asistente de Marketing · Juana Koslay, San Luis
+          </div>
+        </div>
+      </div>
+
+      <div style={{ maxWidth: 800, margin: "0 auto", padding: "24px 16px" }}>
+
+        {/* Step 1: Select type */}
+        <div style={{ marginBottom: 24 }}>
+          <div style={{ fontSize: 13, color: "#8ab4a0", letterSpacing: "2px", textTransform: "uppercase", marginBottom: 12 }}>
+            1 · ¿Qué querés crear?
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10 }}>
+            {CONTENT_TYPES.map((type) => (
+              <button
+                key={type.id}
+                onClick={() => { setSelectedType(type.id); setCustomPrompt(""); setResult(""); }}
+                style={{
+                  background: selectedType === type.id
+                    ? `linear-gradient(135deg, ${type.color}22, ${type.color}44)`
+                    : "rgba(255,255,255,0.04)",
+                  border: `1.5px solid ${selectedType === type.id ? type.color : "rgba(255,255,255,0.1)"}`,
+                  borderRadius: 12,
+                  padding: "14px 10px",
+                  cursor: "pointer",
+                  color: selectedType === type.id ? "#fff" : "#a0b4a8",
+                  fontSize: 13,
+                  transition: "all 0.2s",
+                  display: "flex", flexDirection: "column", alignItems: "center", gap: 6,
+                  boxShadow: selectedType === type.id ? `0 0 16px ${type.color}33` : "none",
+                }}
+              >
+                <span style={{ fontSize: 22 }}>{type.icon}</span>
+                <span style={{ fontFamily: "'Arial', sans-serif", fontWeight: selectedType === type.id ? "600" : "400" }}>
+                  {type.label}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Step 2: Quick prompts or custom */}
+        {selectedType && (
+          <div style={{ marginBottom: 24 }}>
+            <div style={{ fontSize: 13, color: "#8ab4a0", letterSpacing: "2px", textTransform: "uppercase", marginBottom: 12 }}>
+              2 · ¿Sobre qué tema?
+            </div>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 12 }}>
+              {QUICK_PROMPTS[selectedType]?.map((p) => (
+                <button
+                  key={p}
+                  onClick={() => setCustomPrompt(p)}
+                  style={{
+                    background: customPrompt === p ? `${selectedTypeData.color}33` : "rgba(255,255,255,0.06)",
+                    border: `1px solid ${customPrompt === p ? selectedTypeData.color : "rgba(255,255,255,0.12)"}`,
+                    borderRadius: 20,
+                    padding: "6px 14px",
+                    cursor: "pointer",
+                    color: customPrompt === p ? "#fff" : "#a0b4a8",
+                    fontSize: 12,
+                    fontFamily: "'Arial', sans-serif",
+                    transition: "all 0.2s",
+                  }}
+                >
+                  {p}
+                </button>
+              ))}
+            </div>
+            <textarea
+              value={customPrompt}
+              onChange={(e) => setCustomPrompt(e.target.value)}
+              placeholder="O escribí tu propio tema..."
+              rows={2}
+              style={{
+                width: "100%",
+                background: "rgba(255,255,255,0.05)",
+                border: "1.5px solid rgba(255,255,255,0.12)",
+                borderRadius: 10,
+                padding: "12px 14px",
+                color: "#e8e0d4",
+                fontSize: 14,
+                fontFamily: "'Arial', sans-serif",
+                resize: "none",
+                outline: "none",
+                boxSizing: "border-box",
+              }}
+            />
+            <button
+              onClick={() => generate(customPrompt)}
+              disabled={!customPrompt.trim() || loading}
+              style={{
+                marginTop: 12,
+                width: "100%",
+                background: loading ? "rgba(82,183,136,0.3)" : "linear-gradient(135deg, #2d6a4f, #52b788)",
+                border: "none",
+                borderRadius: 10,
+                padding: "14px",
+                cursor: loading ? "not-allowed" : "pointer",
+                color: "#fff",
+                fontSize: 15,
+                fontFamily: "'Arial', sans-serif",
+                fontWeight: "600",
+                letterSpacing: "0.5px",
+                transition: "all 0.2s",
+                boxShadow: loading ? "none" : "0 4px 16px rgba(82,183,136,0.3)",
+              }}
+            >
+              {loading ? "✨ Generando..." : `✨ Generar ${selectedTypeData?.label}`}
+            </button>
+          </div>
+        )}
+
+        {/* Result */}
+        {result && (
+          <div style={{
+            background: "rgba(45, 106, 79, 0.12)",
+            border: "1.5px solid rgba(82,183,136,0.3)",
+            borderRadius: 14,
+            padding: "20px",
+            marginBottom: 24,
+            position: "relative",
+          }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+              <div style={{ fontSize: 12, color: "#52b788", letterSpacing: "2px", textTransform: "uppercase" }}>
+                ✅ Contenido generado
+              </div>
+              <button
+                onClick={handleCopy}
+                style={{
+                  background: copied ? "rgba(82,183,136,0.3)" : "rgba(255,255,255,0.08)",
+                  border: "1px solid rgba(82,183,136,0.4)",
+                  borderRadius: 8,
+                  padding: "6px 14px",
+                  cursor: "pointer",
+                  color: copied ? "#52b788" : "#a0b4a8",
+                  fontSize: 12,
+                  fontFamily: "'Arial', sans-serif",
+                  transition: "all 0.2s",
+                }}
+              >
+                {copied ? "✓ Copiado" : "📋 Copiar"}
+              </button>
+            </div>
+            <div style={{
+              whiteSpace: "pre-wrap",
+              fontSize: 14,
+              lineHeight: 1.7,
+              color: "#dde8e4",
+              fontFamily: "'Arial', sans-serif",
+            }}>
+              {result}
+            </div>
+            <button
+              onClick={() => generate(customPrompt)}
+              style={{
+                marginTop: 14,
+                background: "transparent",
+                border: "1px solid rgba(255,255,255,0.15)",
+                borderRadius: 8,
+                padding: "8px 16px",
+                cursor: "pointer",
+                color: "#8ab4a0",
+                fontSize: 12,
+                fontFamily: "'Arial', sans-serif",
+              }}
+            >
+              🔄 Regenerar
+            </button>
+          </div>
+        )}
+
+        {/* History */}
+        {history.length > 0 && (
+          <div>
+            <div style={{ fontSize: 13, color: "#8ab4a0", letterSpacing: "2px", textTransform: "uppercase", marginBottom: 12 }}>
+              Historial reciente
+            </div>
+            {history.map((item, i) => (
+              <div
+                key={i}
+                onClick={() => setResult(item.result)}
+                style={{
+                  background: "rgba(255,255,255,0.03)",
+                  border: "1px solid rgba(255,255,255,0.08)",
+                  borderRadius: 10,
+                  padding: "12px 16px",
+                  marginBottom: 8,
+                  cursor: "pointer",
+                  transition: "all 0.2s",
+                }}
+              >
+                <div style={{ fontSize: 12, color: "#52b788", fontFamily: "'Arial', sans-serif" }}>{item.type}</div>
+                <div style={{ fontSize: 13, color: "#a0b4a8", fontFamily: "'Arial', sans-serif", marginTop: 2 }}>{item.prompt}</div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Empty state */}
+        {!selectedType && (
+          <div style={{ textAlign: "center", padding: "40px 0", color: "#4a6a5a" }}>
+            <div style={{ fontSize: 48, marginBottom: 12 }}>💊</div>
+            <div style={{ fontSize: 16, fontFamily: "'Arial', sans-serif" }}>Seleccioná un tipo de contenido para empezar</div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
